@@ -13,7 +13,11 @@ import CustomButton from "../../components/CustomButton";
 import styled from "styled-components/native";
 import { useNavigation } from "@react-navigation/native";
 import { firebaseApp, db, auth } from "../../Firebase";
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+} from "firebase/auth";
 
 import {
   createUserWithEmailAndPassword,
@@ -27,10 +31,10 @@ const SignUpScreen = () => {
   const navigation = useNavigation();
   //add google provider
   const g_provider: GoogleAuthProvider = new GoogleAuthProvider();
-  function onRegisterPress() {
+  async function onRegisterPress() {
     // console.warn("register clicked")
 
-    createUserWithEmailAndPassword(auth, email, password)
+    await createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential: any) => {
         const user = userCredential.user;
         user.displayName = username;
@@ -60,11 +64,60 @@ const SignUpScreen = () => {
     navigation.navigate("SignIn");
   };
   const onRegisterWithFacebookPress = () => {
-    console.warn("RegisterWith Facebook clicked");
+    //  console.warn("RegisterWith Facebook clicked");
+    // register with Github
+    const provider = new GithubAuthProvider();
+    // provider.addScope("repo");
+    provider.setCustomParameters({
+      allow_signup: "true",
+    });
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // This gives you a GitHub Access Token. You can use it to access the GitHub API.
+        const credential = GithubAuthProvider.credentialFromResult(result);
+        const token = credential?.accessToken;
+
+        // The signed-in user info.
+        const user = result.user;
+        navigation.navigate("SignIn");
+        // ...
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.email;
+        // The AuthCredential type that was used.
+        const credential = GithubAuthProvider.credentialFromError(error);
+        // ...
+      });
   };
 
   const onRegisterWithGooglePress = () => {
-    console.warn("RegisterWith Google clicked");
+    // console.warn("RegisterWith Google clicked");
+    const provider = new GoogleAuthProvider();
+    provider.addScope("https://www.googleapis.com/auth/contacts.readonly");
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential?.accessToken;
+        // The signed-in user info.
+        const user = result.user;
+        navigation.navigate("SignIn");
+        // ...
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.email;
+        // The AuthCredential type that was used.
+        const credential = GoogleAuthProvider.credentialFromError(error);
+        // ...
+      });
     // signInWithPopup(auth, g_provider)
     //   .then((result) => {
     //     // This gives you a Google Access Token. You can use it to access the Google API.
@@ -126,7 +179,7 @@ const SignUpScreen = () => {
 
           <CustomButton
             onPress={onRegisterWithFacebookPress}
-            text="Sign In with Facebook"
+            text="Sign In with Github"
             fgColor="#4765a9"
             bgColor="#e7eaf4"
           />
